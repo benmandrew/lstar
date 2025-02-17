@@ -49,7 +49,7 @@ def write(t: Table, name: str, title: str):
         path="out/{}.svg".format(name),
         args="-Glabel=\"{}\" ".format(title))
 
-if __name__ == "__main__":
+def main():
     tables = [
         (ab_plus, "ab_plus"),
         (ab_star, "ab_star"),
@@ -61,3 +61,6 @@ if __name__ == "__main__":
     for (t, name) in tables:
         t, title = t()
         write(t, name, title)
+
+if __name__ == "__main__":
+    main()
