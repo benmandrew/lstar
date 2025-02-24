@@ -1,0 +1,27 @@
+?start: free initial accepting rejecting info transitions
+
+free: "DFA for formula with free variables:" WORD+ NL
+initial: "Initial state:" INT NL
+accepting: "Accepting states:" INT+ NL
+rejecting: "Rejecting states:" INT+ NL
+
+info: "Automaton has" INT "states and" INT "BDD-nodes" NL
+
+transitions: "Transitions:" NL edge+
+
+edge: "State" INT ":" edge_var_list "-> state" INT NL
+
+edge_var_list: edge_var+
+edge_var: "0" -> false
+        | "1" -> true
+        | "X" -> unknown
+
+// tail: "A counter-example of least length" TAIL*
+// TAIL: /.+/
+
+%import common.INT
+%import common.WORD
+%import common.WS_INLINE
+%import common.NEWLINE -> NL
+
+%ignore WS_INLINE
