@@ -23,20 +23,22 @@ my_dfa = DFA(
     final_states={'q1'}
 )
 
-import re as regex
-from table import Table
+my_dfa.show_diagram().draw(path="bruh.svg")
 
-# re = regex.compile(r"(ab)+")
-# ab_plus = Table.from_cexs(re, [ "ab", "aaab" ]).to_dfa()
+# import re as regex
+# from table import Table
 
-re = regex.compile(r"b(ab)+")
-b_ab_plus = Table.from_cexs(re, [ "bab", "ab", "bab" ]).to_dfa()
+# # re = regex.compile(r"(ab)+")
+# # ab_plus = Table.from_cexs(re, [ "ab", "aaab" ]).to_dfa()
 
-re = regex.compile(r"(ab)*")
-ab_star = Table.from_cexs(re, []).to_dfa()
+# re = regex.compile(r"b(ab)+")
+# b_ab_plus = Table.from_cexs(re, [ "bab", "ab", "bab" ]).to_dfa()
 
-dfa = ab_star.difference(b_ab_plus)
+# re = regex.compile(r"(ab)*")
+# ab_star = Table.from_cexs(re, []).to_dfa()
 
-dfa.show_diagram().draw(path="bruh.svg")
+# dfa = ab_star.difference(b_ab_plus)
+
+# dfa.show_diagram().draw(path="bruh.svg")
 
 # read_user_input(dfa)
