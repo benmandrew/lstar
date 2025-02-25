@@ -10,11 +10,22 @@ from copy import deepcopy
 class TreeTransformer(Transformer):
     INT = int
     WORD = str
-    true = lambda self, _: True
-    false = lambda self, _: False
-    unknown = lambda self, _: None
-    info = lambda self, _: Discard
-    NL = lambda self, _: Discard
+
+    def true(self, _):
+        True
+
+    def false(self, _):
+        False
+
+    def unknown(self, _):
+        None
+
+    def info(self, _):
+        Discard
+
+    def NL(self, _):
+        Discard
+
     edge_var_list = list
 
     def edge(self, e):
@@ -25,8 +36,8 @@ class TreeTransformer(Transformer):
         }
 
 
-def bool_list_to_str(l):
-    return "".join(["1" if b else "0" for b in l])
+def bool_list_to_str(bl):
+    return "".join(["1" if b else "0" for b in bl])
 
 
 def concrete_transitions(t):
@@ -55,7 +66,7 @@ def concrete_transitions(t):
             return f(i + 1, t, acc)
 
     res = f(0, t, [[]])
-    return [bool_list_to_str(l) for l in res]
+    return [bool_list_to_str(bl) for bl in res]
 
 
 def get_transitions(t_l):

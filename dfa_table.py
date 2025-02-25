@@ -171,7 +171,9 @@ class Table:
         self.regularise(q)
 
     def print(self):
-        eps = lambda x: "." if x == "" else x
+        def eps(s):
+            return "." if s == "" else s
+
         print("x---------------")
         print("       |", end="")
         for e in sorted(self.e):
