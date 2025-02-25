@@ -174,19 +174,21 @@ class Table:
         def eps(s):
             return "." if s == "" else s
 
+        sa = sorted(self.sa())
+        c_width = len(max(sa, key=len))
         print("x---------------")
-        print("       |", end="")
+        print((" " * c_width) + "|", end="")
         for e in sorted(self.e):
             print("{s: >7}".format(s=eps(e)), end="")
         print("\n----------------")
         for pre in sorted(self.s):
-            print("{s: <7}|".format(s=eps(pre)), end="")
+            print("{s: <{w}}|".format(s=eps(pre), w=c_width), end="")
             for suf in self.e:
                 print("{d: >7}".format(d=int(self.t.get(pre + suf))), end="")
             print()
         print("----------------")
-        for pre in sorted(self.sa()):
-            print("{s: <7}|".format(s=eps(pre)), end="")
+        for pre in sa:
+            print("{s: <{w}}|".format(s=eps(pre), w=c_width), end="")
             for suf in self.e:
                 print("{d: >7}".format(d=int(self.t.get(pre + suf))), end="")
             print()
