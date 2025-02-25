@@ -1,21 +1,32 @@
 import parser.mona as mona
-from dfa_table import Table, Query
+import dfa_table as dt
 
-ltl = "F(a) & F(b)"
-dfa = mona.ltl_to_dfa(ltl)
-# dfa = mona.ltl_to_dfa("F(a & b)")
 
-# mona.draw_ltl(ltl, "ltl")
-mona.draw_dfa(dfa, "bruh")
+def generate_cex(dfa_tgt, t):
+    dfa_gen = t.to_dfa()
+    dfa = dfa_tgt.difference(dfa_gen)
+    cutoff = 50
+    cex = None
+    for i in range(cutoff):
+        try:
+            cex = dfa.random_word(i)
+            break
+        except ValueError:
+            pass
+    return cex
 
-q = Query([dfa], dfa.input_symbols)
-t = Table(q, dfa.input_symbols)
 
-# t.draw("tmp", "main")
+dfa_tgt = mona.ltl_to_dfa("F(a) & F(b) & F(c)")
+
+q = dt.Query([dfa_tgt], dfa_tgt.input_symbols)
+t = dt.Table(q, dfa_tgt.input_symbols)
 
 cex = ""
-while cex != "FIN":
-    t.print()
-    t.draw("tmp", "main")
-    cex = input()
+while cex is not None:
+    cex = generate_cex(dfa_tgt, t)
+    if cex is None:
+        break
+    print("Counterexample:", cex)
     t.add_cex(q, cex)
+
+mona.draw_dfa(t.to_dfa(), "tmp")
