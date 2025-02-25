@@ -10,22 +10,11 @@ from copy import deepcopy
 class TreeTransformer(Transformer):
     INT = int
     WORD = str
-
-    def true(self, _):
-        True
-
-    def false(self, _):
-        False
-
-    def unknown(self, _):
-        None
-
-    def info(self, _):
-        Discard
-
-    def NL(self, _):
-        Discard
-
+    true = lambda self, _: True  # noqa: E731
+    false = lambda self, _: False  # noqa: E731
+    unknown = lambda self, _: None  # noqa: E731
+    info = lambda self, _: Discard  # noqa: E731
+    NL = lambda self, _: Discard  # noqa: E731
     edge_var_list = list
 
     def edge(self, e):
