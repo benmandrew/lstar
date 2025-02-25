@@ -1,29 +1,40 @@
-import itertools
-import re as regex
+from itertools import product, combinations
 from automata.fa.dfa import DFA
 
 
-class ReQuery:
-    def __init__(self, re_l):
-        self.re_l = re_l
-
-    def add(self, re):
-        self.re_l.append(re)
-
-    def query(self, s):
-        return any(
-            True if regex.fullmatch(re, s) else False for re in self.re_l
-        )
+def bin_to_chr(s):
+    return chr(int(s, 2))
 
 
-class DfaQuery:
-    def __init__(self, dfa_l):
+def chr_to_bin(s, letter_len):
+    if s == "":
+        return ""
+    return "{0:b}".format(ord(s)).zfill(letter_len)
+
+
+def split_string(s, letter_len):
+    """Split binary string into alphabet letters and
+    convert to unicode so that the DFA can accept them
+    """
+
+    return [s[i : i + letter_len] for i in range(0, len(s), letter_len)]
+
+    # return [
+    #     bin_to_chr(s[i : i + letter_len]) for i in range(0, len(s), letter_len)
+    # ]
+
+
+class Query:
+    def __init__(self, dfa_l, alphabet):
+        self.alphabet = alphabet
+        self.letter_len = len(next(iter(alphabet)))
         self.dfa_l = dfa_l
 
     def add(self, dfa):
         self.dfa_l.append(dfa)
 
     def query(self, s):
+        s = split_string(s, self.letter_len)
         return any(dfa.accepts_input(s) for dfa in self.dfa_l)
 
 
@@ -33,15 +44,16 @@ def row_to_string(row):
 
 class Table:
     def __init__(self, q, alphabet):
-        self.s: set[str] = {""}
-        self.e: set[str] = {""}
-        self.t: dict[str, bool] = dict()
+        self.s = {""}
+        self.e = {""}
+        self.t = dict()
         self.alphabet = alphabet
+        self.letter_len = len(next(iter(alphabet)))
         self.regularise(q)
 
     def sa(self):
         ret = []
-        for s, a in itertools.product(self.s, self.alphabet):
+        for s, a in product(self.s, self.alphabet):
             sa = s + a
             if sa not in self.s:
                 ret.append(sa)
@@ -53,22 +65,22 @@ class Table:
             self.t.update({s: is_in_l})
 
     def add_all_els(self, q) -> None:
-        with_a = itertools.product(self.s, self.alphabet, self.e)
+        with_a = product(self.s, self.alphabet, self.e)
         for s, a, e in with_a:
             self.add_table_el(q, s + a + e)
-        without_a = itertools.product(self.s, self.e)
+        without_a = product(self.s, self.e)
         for s, e in without_a:
             self.add_table_el(q, s + e)
 
     def add_prefix(self, pre) -> None:
         if (pre not in self.s) and pre != "":
             self.s.add(pre)
-            self.add_prefix(pre[:-1])
+            self.add_prefix(pre[: -self.letter_len])
 
     def add_suffix(self, suf) -> None:
         if (suf not in self.e) and suf != "":
             self.e.add(suf)
-            self.add_prefix(suf[1:])
+            self.add_prefix(suf[self.letter_len :])
 
     def row(self, pre: str) -> list[bool]:
         e = sorted(self.e)
@@ -98,8 +110,8 @@ class Table:
         return changed
 
     def get_inconsistent(self):
-        ss = itertools.combinations(self.s, 2)
-        x = itertools.product(ss, self.alphabet, self.e)
+        ss = combinations(self.s, 2)
+        x = product(ss, self.alphabet, self.e)
         ret = []
         for (pre_1, pre_2), a, e in x:
             if self.row(pre_1) == self.row(pre_2) and self.t.get(
@@ -125,6 +137,10 @@ class Table:
             changed = self.make_closed(q) or self.make_consistent(q)
 
     def add_cex(self, q, cex):
+        split_cex = split_string(cex, self.letter_len)
+        # cex = [bin_to_chr(c) for c in cex]
+        for c in split_cex:
+            assert c in self.alphabet
         self.add_prefix(cex)
         self.regularise(q)
 

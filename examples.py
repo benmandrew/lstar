@@ -1,5 +1,5 @@
 import re as regex
-from table import Table, ReQuery
+from re_table import Table, Query
 
 alphabet = ["a", "b"]
 
@@ -7,31 +7,31 @@ alphabet = ["a", "b"]
 def ab_plus():
     re_s = r"(ab)+"
     re = regex.compile(re_s)
-    return Table.from_cexs(ReQuery([re]), ["ab", "abbab"], alphabet), re_s
+    return Table.from_cexs(Query([re]), ["ab", "abbab"], alphabet), re_s
 
 
 def ab_star():
     re_s = r"(ab)*"
     re = regex.compile(re_s)
-    return Table.from_cexs(ReQuery([re]), [], alphabet), re_s
+    return Table.from_cexs(Query([re]), [], alphabet), re_s
 
 
 def b_ab_plus():
     re_s = r"b(ab)+"
     re = regex.compile(re_s)
-    return Table.from_cexs(ReQuery([re]), ["bab", "bbbab"], alphabet), re_s
+    return Table.from_cexs(Query([re]), ["bab", "bbbab"], alphabet), re_s
 
 
 def ab_plus_2():
     re_s = r"(ab){2,}"
     re = regex.compile(re_s)
-    return Table.from_cexs(ReQuery([re]), ["abab"], alphabet), re_s
+    return Table.from_cexs(Query([re]), ["abab"], alphabet), re_s
 
 
 def ab_plus_3():
     re_s = r"(ab){3,}"
     re = regex.compile(re_s)
-    return Table.from_cexs(ReQuery([re]), ["ababab"], alphabet), re_s
+    return Table.from_cexs(Query([re]), ["ababab"], alphabet), re_s
 
 
 def ab_plus_3_union_b_ab_star():
@@ -42,7 +42,7 @@ def ab_plus_3_union_b_ab_star():
     re_s = re1_s + "|" + re2_s
     return (
         Table.from_cexs(
-            ReQuery([re1, re2]), ["ab", "ababab", "bbbabab"], alphabet
+            Query([re1, re2]), ["ab", "ababab", "bbbabab"], alphabet
         ),
         re_s,
     )
@@ -51,11 +51,11 @@ def ab_plus_3_union_b_ab_star():
 def ab_plus_3_then_b_ab_star():
     re1_s = r"((ab){3,})"
     re = regex.compile(re1_s)
-    t = Table.from_cexs(ReQuery([re]), ["ababab"], alphabet)
+    t = Table.from_cexs(Query([re]), ["ababab"], alphabet)
     re2_s = r"b(ab)*"
     re = regex.compile(re2_s)
     re_s = re1_s + " then " + re2_s
-    t.update_query(ReQuery([re]))
+    t.update_query(Query([re]))
     return t, re_s
 
 

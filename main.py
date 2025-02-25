@@ -1,14 +1,23 @@
 import parser.mona as mona
-from table import Table, DfaQuery
+from dfa_table import Table, Query
 
-# dfa = mona.ltl_to_dfa("F(a & F(b & F(c)))")
-dfa = mona.ltl_to_dfa("F(a)")
+ltl = "F(a & F(b & F(c)))"
+dfa = mona.ltl_to_dfa(ltl)
+# dfa = mona.ltl_to_dfa("F(a & b)")
 
-t = Table(DfaQuery([dfa]), dfa.input_symbols)
+mona.draw_ltl(ltl, "ltl")
+mona.draw_dfa(dfa, "bruh")
 
-print(dfa.transitions)
-print(dfa.final_states)
+q = Query([dfa], dfa.input_symbols)
+t = Table(q, dfa.input_symbols)
 
-print(dfa.accepts_input("11"))
+print(dfa.accepts_input(["01", "10"]))
 
-t.draw("tmp", "main")
+# t.draw("tmp", "main")
+
+cex = ""
+while cex != "FIN":
+    t.print()
+    t.draw("tmp", "main")
+    cex = input()
+    t.add_cex(q, cex)

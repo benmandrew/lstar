@@ -1,5 +1,5 @@
 import re as regex
-from table import Table, ReQuery
+from re_table import Table, ReQuery
 
 
 def main():

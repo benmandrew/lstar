@@ -75,7 +75,6 @@ with open("parser/mona.lark", "r") as f:
 
 
 def remove_initial_transition(transitions):
-    print(transitions)
     transitions = list(filter(lambda x: x["s"] != 0, transitions))
     for t in transitions:
         t["s"] -= 1
@@ -92,8 +91,6 @@ def mona_to_dfa(mona):
     s = mona.split("A counter-example of least length")[0]
     out = mona_parser.parse(s)
     out = TreeTransformer().transform(out).children
-    for o in out:
-        print(o)
     free_vars = out[0].children
     # The MONA output has an unnecessary initial node, labelled '0'
     # This assumes that the real next node is labelled '1', which is then decremented
