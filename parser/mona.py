@@ -6,6 +6,7 @@ import pydot
 
 from copy import deepcopy
 
+
 class TreeTransformer(Transformer):
     INT = int
     WORD = str
@@ -18,13 +19,15 @@ class TreeTransformer(Transformer):
 
     def edge(self, e):
         return {
-            "s":e[0],
-            "t":e[1],
-            "e":e[2],
+            "s": e[0],
+            "t": e[1],
+            "e": e[2],
         }
 
+
 def bool_list_to_str(l):
-    return "".join([ "1" if b else "0" for b in l ])
+    return "".join(["1" if b else "0" for b in l])
+
 
 """
 Generate all concrete transitions from an abstract transition of the form:
@@ -32,6 +35,8 @@ Generate all concrete transitions from an abstract transition of the form:
 Where 0 is a negated literal, 1 is positive,
 and X is either negative or positive, i.e. both satisfy the edge.
 """
+
+
 def concrete_transitions(t):
     def f(i, t, acc):
         if i >= len(t):
@@ -50,22 +55,26 @@ def concrete_transitions(t):
             for j in range(len(acc)):
                 acc[j].append(False)
             return f(i + 1, t, acc)
+
     res = f(0, t, [[]])
-    return [ bool_list_to_str(l) for l in res ]
+    return [bool_list_to_str(l) for l in res]
+
 
 def get_transitions(t_l):
     res = dict()
     for t in t_l:
         for label in concrete_transitions(t["t"]):
             if t["s"] not in res:
-                res[t["s"]] = { label: t["e"] }
+                res[t["s"]] = {label: t["e"]}
             else:
                 res[t["s"]][label] = t["e"]
     return res
 
+
 ltlf_parser = LTLfParser()
 with open("parser/mona.lark", "r") as f:
     mona_parser = Lark(f.read(), parser="lalr")
+
 
 def remove_initial_transition(transitions):
     print(transitions)
@@ -75,9 +84,11 @@ def remove_initial_transition(transitions):
         t["e"] -= 1
     return transitions
 
+
 def decrement_states(accepting):
-    accepting = list(filter(lambda x : x != 0, accepting))
-    return [ x - 1 for x in accepting ]
+    accepting = list(filter(lambda x: x != 0, accepting))
+    return [x - 1 for x in accepting]
+
 
 def mona_to_dfa(mona):
     s = mona.split("A counter-example of least length")[0]
@@ -101,12 +112,15 @@ def mona_to_dfa(mona):
         final_states=set(accepting),
     )
 
+
 def ltl_to_mona(formula):
     f = ltlf_parser(formula)
     return f.to_dfa(mona_dfa_out=True)
 
+
 def ltl_to_dfa(formula):
     return mona_to_dfa(ltl_to_mona(formula))
+
 
 def draw_ltl(formula, name):
     f = ltlf_parser(formula)
@@ -114,8 +128,10 @@ def draw_ltl(formula, name):
     (graph,) = pydot.graph_from_dot_data(dfa)
     graph.write_svg("out/" + name + ".svg")
 
+
 def draw_dfa(dfa, name):
     dfa.show_diagram().draw(path="out/" + name + ".svg")
+
 
 if __name__ == "__main__":
     ltl_to_dfa("F(a & F(b & F(c)))", "desired")

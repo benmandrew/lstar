@@ -2,7 +2,8 @@ import itertools
 import re as regex
 from automata.fa.dfa import DFA
 
-class ReQuery():
+
+class ReQuery:
     def __init__(self, re_l):
         self.re_l = re_l
 
@@ -10,9 +11,12 @@ class ReQuery():
         self.re_l.append(re)
 
     def query(self, s):
-        return any(True if regex.fullmatch(re, s) else False for re in self.re_l)
+        return any(
+            True if regex.fullmatch(re, s) else False for re in self.re_l
+        )
 
-class DfaQuery():
+
+class DfaQuery:
     def __init__(self, dfa_l):
         self.dfa_l = dfa_l
 
@@ -22,13 +26,15 @@ class DfaQuery():
     def query(self, s):
         return any(dfa.accepts_input(s) for dfa in self.dfa_l)
 
+
 def row_to_string(row):
     return "".join(map(lambda x: str(int(x)), row))
 
+
 class Table:
     def __init__(self, q, alphabet):
-        self.s: set[str] = { "" }
-        self.e: set[str] = { "" }
+        self.s: set[str] = {""}
+        self.e: set[str] = {""}
         self.t: dict[str, bool] = dict()
         self.alphabet = alphabet
         self.regularise(q)
@@ -44,14 +50,14 @@ class Table:
     def add_table_el(self, q, s) -> None:
         if s not in self.t.keys():
             is_in_l = q.query(s)
-            self.t.update({ s : is_in_l })
+            self.t.update({s: is_in_l})
 
     def add_all_els(self, q) -> None:
         with_a = itertools.product(self.s, self.alphabet, self.e)
-        for (s, a, e) in with_a:
+        for s, a, e in with_a:
             self.add_table_el(q, s + a + e)
         without_a = itertools.product(self.s, self.e)
-        for (s, e) in without_a:
+        for s, e in without_a:
             self.add_table_el(q, s + e)
 
     def add_prefix(self, pre) -> None:
@@ -66,7 +72,7 @@ class Table:
 
     def row(self, pre: str) -> list[bool]:
         e = sorted(self.e)
-        return [ self.t.get(pre + suf) for suf in e ]
+        return [self.t.get(pre + suf) for suf in e]
 
     def get_non_closed(self):
         ret = []
@@ -95,9 +101,10 @@ class Table:
         ss = itertools.combinations(self.s, 2)
         x = itertools.product(ss, self.alphabet, self.e)
         ret = []
-        for ((pre_1, pre_2), a, e) in x:
-            if (self.row(pre_1) == self.row(pre_2) and
-                self.t.get(pre_1 + a + e) != self.t.get(pre_2 + a + e)):
+        for (pre_1, pre_2), a, e in x:
+            if self.row(pre_1) == self.row(pre_2) and self.t.get(
+                pre_1 + a + e
+            ) != self.t.get(pre_2 + a + e):
                 ret.append(a + e)
         return ret
 
@@ -176,23 +183,25 @@ class Table:
                 if rs in ret:
                     ret[rs][a] = rsa
                 else:
-                    ret[rs] = { a : rsa }
+                    ret[rs] = {a: rsa}
         return ret
 
     def draw(self, name: str, title: str):
         self.to_dfa().show_diagram().draw(
-            path="out/{}.svg".format(name),
-            args="-Glabel=\"{}\" ".format(title))
+            path="out/{}.svg".format(name), args='-Glabel="{}" '.format(title)
+        )
 
     def to_dfa(self):
         states = set(map(lambda x: row_to_string(self.row(x)), self.s))
         initial = row_to_string(self.row(""))
-        finals = set(map(lambda x: row_to_string(self.row(x)), self.get_terminals()))
+        finals = set(
+            map(lambda x: row_to_string(self.row(x)), self.get_terminals())
+        )
         transitions = self.get_transitions()
         return DFA(
             states=states,
             input_symbols=set(self.alphabet),
             transitions=transitions,
             initial_state=initial,
-            final_states=finals
+            final_states=finals,
         )
