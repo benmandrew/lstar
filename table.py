@@ -2,39 +2,57 @@ import itertools
 import re as regex
 from automata.fa.dfa import DFA
 
-alphabet = [ "a", "b" ]
+class ReQuery():
+    def __init__(self, re_l):
+        self.re_l = re_l
+
+    def add(self, re):
+        self.re_l.append(re)
+
+    def query(self, s):
+        return any(True if regex.fullmatch(re, s) else False for re in self.re_l)
+
+class DfaQuery():
+    def __init__(self, dfa_l):
+        self.dfa_l = dfa_l
+
+    def add(self, dfa):
+        self.dfa_l.append(dfa)
+
+    def query(self, s):
+        return any(dfa.accepts_input(s) for dfa in self.dfa_l)
 
 def row_to_string(row):
     return "".join(map(lambda x: str(int(x)), row))
 
 class Table:
-    
-    def __init__(self, re):
+    def __init__(self, q, alphabet):
         self.s: set[str] = { "" }
         self.e: set[str] = { "" }
         self.t: dict[str, bool] = dict()
-        self.regularise(re)
+        self.alphabet = alphabet
+        self.regularise(q)
 
     def sa(self):
         ret = []
-        for s, a in itertools.product(self.s, alphabet):
+        for s, a in itertools.product(self.s, self.alphabet):
             sa = s + a
             if sa not in self.s:
                 ret.append(sa)
         return ret
 
-    def add_table_el(self, re, s) -> None:
+    def add_table_el(self, q, s) -> None:
         if s not in self.t.keys():
-            is_in_l = True if any(regex.fullmatch(re, s) for re in re) else False
+            is_in_l = q.query(s)
             self.t.update({ s : is_in_l })
 
-    def add_all_els(self, re) -> None:
-        with_a = itertools.product(self.s, alphabet, self.e)
+    def add_all_els(self, q) -> None:
+        with_a = itertools.product(self.s, self.alphabet, self.e)
         for (s, a, e) in with_a:
-            self.add_table_el(re, s + a + e)
+            self.add_table_el(q, s + a + e)
         without_a = itertools.product(self.s, self.e)
         for (s, e) in without_a:
-            self.add_table_el(re, s + e)
+            self.add_table_el(q, s + e)
 
     def add_prefix(self, pre) -> None:
         if (pre not in self.s) and pre != "":
@@ -63,19 +81,19 @@ class Table:
                 ret.append(sa)
         return ret
 
-    def make_closed(self, re):
+    def make_closed(self, q):
         changed = False
         non_closed = self.get_non_closed()
         if non_closed != []:
             changed = True
             for pre in non_closed:
                 self.add_prefix(pre)
-            self.add_all_els(re)
+            self.add_all_els(q)
         return changed
 
     def get_inconsistent(self):
         ss = itertools.combinations(self.s, 2)
-        x = itertools.product(ss, alphabet, self.e)
+        x = itertools.product(ss, self.alphabet, self.e)
         ret = []
         for ((pre_1, pre_2), a, e) in x:
             if (self.row(pre_1) == self.row(pre_2) and
@@ -83,25 +101,25 @@ class Table:
                 ret.append(a + e)
         return ret
 
-    def make_consistent(self, re):
+    def make_consistent(self, q):
         changed = False
         inconsistent = self.get_inconsistent()
         if inconsistent != []:
             changed = True
             for suf in inconsistent:
                 self.add_suffix(suf)
-            self.add_all_els(re)
+            self.add_all_els(q)
         return changed
 
-    def regularise(self, re):
-        self.add_all_els(re)
+    def regularise(self, q):
+        self.add_all_els(q)
         changed = True
         while changed:
-            changed = self.make_closed(re) or self.make_consistent(re)
+            changed = self.make_closed(q) or self.make_consistent(q)
 
-    def add_cex(self, re, cex):
+    def add_cex(self, q, cex):
         self.add_prefix(cex)
-        self.regularise(re)
+        self.regularise(q)
 
     def get_terminals(self):
         ret = []
@@ -111,23 +129,23 @@ class Table:
         return ret
 
     @staticmethod
-    def from_cexs(re, cexs, debug=False):
-        ret = Table(re)
+    def from_cexs(q, cexs, alphabet, debug=False):
+        ret = Table(q, alphabet)
         for i, cex in enumerate(cexs):
             if debug:
                 print("ITER {d}".format(d=i))
                 ret.print()
-            ret.add_cex(re, cex)
+            ret.add_cex(q, cex)
         if debug:
             print("FINAL")
             ret.print()
         return ret
 
-    def update_re(self, re):
+    def update_query(self, q):
         for k, v in self.t.items():
             if not v:
-                self.t[k] = True if any(regex.fullmatch(re, k) for re in re) else False
-        self.regularise(re)
+                self.t[k] = q.query(k)
+        self.regularise(q)
 
     def print(self):
         eps = lambda x: "." if x == "" else x
@@ -153,13 +171,18 @@ class Table:
         ret = dict()
         for s in self.s:
             rs = row_to_string(self.row(s))
-            for a in alphabet:
+            for a in self.alphabet:
                 rsa = row_to_string(self.row(s + a))
                 if rs in ret:
                     ret[rs][a] = rsa
                 else:
                     ret[rs] = { a : rsa }
         return ret
+
+    def draw(self, name: str, title: str):
+        self.to_dfa().show_diagram().draw(
+            path="out/{}.svg".format(name),
+            args="-Glabel=\"{}\" ".format(title))
 
     def to_dfa(self):
         states = set(map(lambda x: row_to_string(self.row(x)), self.s))
@@ -168,7 +191,7 @@ class Table:
         transitions = self.get_transitions()
         return DFA(
             states=states,
-            input_symbols=set(alphabet),
+            input_symbols=set(self.alphabet),
             transitions=transitions,
             initial_state=initial,
             final_states=finals

@@ -67,37 +67,46 @@ ltlf_parser = LTLfParser()
 with open("parser/mona.lark", "r") as f:
     mona_parser = Lark(f.read(), parser="lalr")
 
-# def remove_initial_transition(transitions):
-#     print(transitions)
-#     return list(filter(lambda x: x["s"] != 0, transitions))
+def remove_initial_transition(transitions):
+    print(transitions)
+    transitions = list(filter(lambda x: x["s"] != 0, transitions))
+    for t in transitions:
+        t["s"] -= 1
+        t["e"] -= 1
+    return transitions
 
-def mona_to_dfa(mona, name):
+def decrement_states(accepting):
+    accepting = list(filter(lambda x : x != 0, accepting))
+    return [ x - 1 for x in accepting ]
+
+def mona_to_dfa(mona):
     s = mona.split("A counter-example of least length")[0]
     out = mona_parser.parse(s)
     out = TreeTransformer().transform(out).children
-
+    for o in out:
+        print(o)
     free_vars = out[0].children
+    # The MONA output has an unnecessary initial node, labelled '0'
+    # This assumes that the real next node is labelled '1', which is then decremented
     initial = out[1].children[0]
-    accepting = out[2].children
-    rejecting = out[3].children
-    transitions = out[4].children
-
+    accepting = decrement_states(out[2].children)
+    rejecting = decrement_states(out[3].children)
+    transitions = remove_initial_transition(out[4].children)
     input_symbols = concrete_transitions([None] * len(free_vars))
-    my_dfa = DFA(
+    return DFA(
         states=set(accepting + rejecting),
         input_symbols=set(input_symbols),
         transitions=get_transitions(transitions),
         initial_state=initial,
         final_states=set(accepting),
     )
-    my_dfa.show_diagram().draw(path=name + ".svg")
 
 def ltl_to_mona(formula):
     f = ltlf_parser(formula)
     return f.to_dfa(mona_dfa_out=True)
 
-def ltl_to_dfa(formula, name):
-    mona_to_dfa(ltl_to_mona(formula), name)
+def ltl_to_dfa(formula):
+    return mona_to_dfa(ltl_to_mona(formula))
 
 def draw_ltl(formula, name):
     f = ltlf_parser(formula)
@@ -105,7 +114,10 @@ def draw_ltl(formula, name):
     (graph,) = pydot.graph_from_dot_data(dfa)
     graph.write_svg("out/" + name + ".svg")
 
+def draw_dfa(dfa, name):
+    dfa.show_diagram().draw(path="out/" + name + ".svg")
 
-ltl_to_dfa("F(a & F(b & F(c)))", "desired")
-ltl_to_dfa("F(a) & F(b) & F(c)", "intermediate")
-ltl_to_dfa("F(a) | F(b) | F(c)", "critical")
+if __name__ == "__main__":
+    ltl_to_dfa("F(a & F(b & F(c)))", "desired")
+    ltl_to_dfa("F(a) & F(b) & F(c)", "intermediate")
+    ltl_to_dfa("F(a) | F(b) | F(c)", "critical")
