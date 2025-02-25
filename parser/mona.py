@@ -29,15 +29,13 @@ def bool_list_to_str(l):
     return "".join(["1" if b else "0" for b in l])
 
 
-"""
-Generate all concrete transitions from an abstract transition of the form:
-    01X0X
-Where 0 is a negated literal, 1 is positive,
-and X is either negative or positive, i.e. both satisfy the edge.
-"""
-
-
 def concrete_transitions(t):
+    """Generate all concrete transitions from an abstract transition of the form:
+        01X0X
+    Where 0 is a negated literal, 1 is positive,
+    and X is either negative or positive, i.e. both satisfy the edge.
+    """
+
     def f(i, t, acc):
         if i >= len(t):
             return acc
