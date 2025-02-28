@@ -94,6 +94,10 @@ class Dfa:
         return Dfa.make_example("F(a & F(b & F(c)))", ["100" "010" "001"])
 
     @staticmethod
+    def fafb_chain():
+        return Dfa.make_example("F(a & F(b))", ["10" "01"])
+
+    @staticmethod
     def fafbfc_or():
         return Dfa.make_example("F(a) | F(b) | F(c)", [])
 
@@ -113,6 +117,7 @@ class Dfa:
     def tables():
         return [
             (Dfa.fafbfc_chain, "fafbfc_chain"),
+            (Dfa.fafb_chain, "fafb_chain"),
             (Dfa.fafbfc_or, "fafbfc_or"),
             (Dfa.fafbfc_and, "fafbfc_and"),
             (Dfa.fafb_and, "fafb_and"),

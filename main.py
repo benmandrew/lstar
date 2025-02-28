@@ -1,10 +1,12 @@
 import parser.mona as mona
-import dfa_table as dt
+
+from dfa_table import Table, Query
+from automata.fa.dfa import DFA
 
 
-def generate_cex(dfa_tgt, t):
-    dfa_gen = t.to_dfa()
-    dfa = dfa_tgt.difference(dfa_gen)
+def generate_random_cex(dfa_tgt, t):
+    dfa_gen: DFA = t.to_dfa()
+    dfa: DFA = dfa_tgt.difference(dfa_gen)
     cutoff = 50
     cex = None
     for i in range(cutoff):
@@ -16,17 +18,55 @@ def generate_cex(dfa_tgt, t):
     return cex
 
 
-dfa_tgt = mona.ltl_to_dfa("F(a) & F(b) & F(c)")
+def dfa_to_table(dfa: DFA, query: Query) -> Table:
+    t = Table(query, dfa.input_symbols)
+    cex = ""
+    while cex is not None:
+        cex = generate_random_cex(dfa, t)
+        if cex is None:
+            break
+        t.add_cex(query, cex)
+    return t
 
-q = dt.Query([dfa_tgt], dfa_tgt.input_symbols)
-t = dt.Table(q, dfa_tgt.input_symbols)
 
-cex = ""
-while cex is not None:
-    cex = generate_cex(dfa_tgt, t)
-    if cex is None:
-        break
-    print("Counterexample:", cex)
-    t.add_cex(q, cex)
+def ltl_to_table(ltl: str) -> Table:
+    dfa = mona.ltl_to_dfa(ltl)
+    query = Query([dfa], dfa.input_symbols)
+    return dfa_to_table(dfa, query)
 
-mona.draw_dfa(t.to_dfa(), "tmp")
+
+def weaken_to_target(target: DFA, origin: DFA, t: Table):
+    query_both: Query = Query([target, origin], origin.input_symbols)
+    t.update_query(query_both)
+    j = 0
+    modified = True
+    while modified:
+        if j >= 3:
+            break
+        j += 1
+        modified = False
+        dfa_gen: DFA = t.to_dfa()
+        dfa_diff: DFA = target.difference(dfa_gen)
+        if dfa_diff.isempty():
+            break
+        i = 0
+        found_cex = False
+        while not found_cex:
+            i += 1
+            for cex in dfa_diff.words_of_length(i):
+                t.add_cex(query_both, cex)
+                found_cex = True
+                modified = True
+                break
+    return t
+
+
+desired: DFA = mona.ltl_to_dfa("F(a & F(b & F(c)))")
+query = Query([desired], desired.input_symbols)
+t: Table = dfa_to_table(desired, query)
+
+assumption: DFA = mona.ltl_to_dfa("F(a) & F(b) & F(c)")
+
+t_weak = weaken_to_target(assumption, desired, t)
+
+t_weak.draw("weakened", "Weakened")
