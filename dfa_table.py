@@ -9,7 +9,7 @@ def bin_to_chr(s):
 def chr_to_bin(s, letter_len):
     if s == "":
         return ""
-    return "{0:b}".format(ord(s)).zfill(letter_len)
+    return f"{ord(s):b}".zfill(letter_len)
 
 
 def split_string(s, letter_len):
@@ -152,16 +152,10 @@ class Table:
         return ret
 
     @staticmethod
-    def from_cexs(q, cexs, alphabet, debug=False):
+    def from_cexs(q, cexs, alphabet):
         ret = Table(q, alphabet)
-        for i, cex in enumerate(cexs):
-            if debug:
-                print("ITER {d}".format(d=i))
-                ret.print()
-            ret.add_cex(q, cex)
-        if debug:
-            print("FINAL")
-            ret.print()
+        for c in cexs:
+            ret.add_cex(q, c)
         return ret
 
     def update_query(self, q):
@@ -179,18 +173,18 @@ class Table:
         print("x---------------")
         print((" " * c_width) + "|", end="")
         for e in sorted(self.e):
-            print("{s: >7}".format(s=eps(e)), end="")
+            print(f"{eps(e): >7}", end="")
         print("\n----------------")
         for pre in sorted(self.s):
-            print("{s: <{w}}|".format(s=eps(pre), w=c_width), end="")
+            print(f"{eps(pre): <{c_width}}|", end="")
             for suf in self.e:
-                print("{d: >7}".format(d=int(self.t.get(pre + suf))), end="")
+                print(f"{int(self.t.get(pre + suf)): >7}", end="")
             print()
         print("----------------")
         for pre in sa:
-            print("{s: <{w}}|".format(s=eps(pre), w=c_width), end="")
+            print(f"{eps(pre): <{c_width}}|", end="")
             for suf in self.e:
-                print("{d: >7}".format(d=int(self.t.get(pre + suf))), end="")
+                print(f"{int(self.t.get(pre + suf)): >7}", end="")
             print()
         print("x---------------")
 
@@ -208,7 +202,7 @@ class Table:
 
     def draw(self, name: str, title: str):
         self.to_dfa().show_diagram().draw(
-            path="out/{}.svg".format(name), args='-Glabel="{}" '.format(title)
+            path=f"out/{name}.svg", args=f'-Glabel="{title}" '
         )
 
     def to_dfa(self):

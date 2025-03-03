@@ -1,10 +1,10 @@
+from copy import deepcopy
+
 from lark import Lark, Transformer, Discard
 from automata.fa.dfa import DFA
 
 from ltlf2dfa.parser.ltlf import LTLfParser
 import pydot
-
-from copy import deepcopy
 
 
 class TreeTransformer(Transformer):
@@ -41,17 +41,17 @@ def concrete_transitions(t):
             return acc
         if t[i] is None:
             other = deepcopy(acc)
-            for j in range(len(acc)):
-                acc[j].append(True)
-                other[j].append(False)
+            for el_acc, el_other in zip(acc, other):
+                el_acc.append(True)
+                el_other.append(False)
             return f(i + 1, t, acc + other)
         elif t[i]:
-            for j in range(len(acc)):
-                acc[j].append(True)
+            for el in acc:
+                el.append(True)
             return f(i + 1, t, acc)
         else:
-            for j in range(len(acc)):
-                acc[j].append(False)
+            for el in acc:
+                el.append(False)
             return f(i + 1, t, acc)
 
     res = f(0, t, [[]])
@@ -109,8 +109,8 @@ def mona_to_dfa(mona):
 
 
 def ltl_to_mona(formula):
-    f = ltlf_parser(formula)
-    return f.to_dfa(mona_dfa_out=True)
+    parser = ltlf_parser(formula)
+    return parser.to_dfa(mona_dfa_out=True)
 
 
 def ltl_to_dfa(formula):
@@ -118,17 +118,11 @@ def ltl_to_dfa(formula):
 
 
 def draw_ltl(formula, name):
-    f = ltlf_parser(formula)
-    dfa = f.to_dfa()
+    parser = ltlf_parser(formula)
+    dfa = parser.to_dfa()
     (graph,) = pydot.graph_from_dot_data(dfa)
     graph.write_svg("out/" + name + ".svg")
 
 
 def draw_dfa(dfa, name):
     dfa.show_diagram().draw(path="out/" + name + ".svg")
-
-
-if __name__ == "__main__":
-    ltl_to_dfa("F(a & F(b & F(c)))", "desired")
-    ltl_to_dfa("F(a) & F(b) & F(c)", "intermediate")
-    ltl_to_dfa("F(a) | F(b) | F(c)", "critical")
