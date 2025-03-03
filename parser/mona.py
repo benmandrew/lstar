@@ -82,12 +82,39 @@ def remove_initial_transition(transitions):
     return transitions
 
 
-def decrement_states(accepting):
+def reorder_transition_letters(
+    transitions, edge_letters: list[str], true_letters: list[str]
+):
+    """Expand an abstract `edge` to a wider set of `true_letters`, and reorder to the true order"""
+
+    def f(edge: str):
+        new_edge = []
+        for true_l in true_letters:
+            try:
+                i = edge_letters.index(true_l)
+                new_edge.append(edge[i])
+            except ValueError:
+                new_edge.append(None)
+        return new_edge
+
+    for t in transitions:
+        t["t"] = f(t["t"])
+    return transitions
+
+
+def decrement_states(accepting: list[int]):
     accepting = list(filter(lambda x: x != 0, accepting))
     return [x - 1 for x in accepting]
 
 
-def mona_to_dfa(mona):
+def mona_to_free_vars(mona: str) -> list[str]:
+    s = mona.split("A counter-example of least length")[0]
+    out = mona_parser.parse(s)
+    out = TreeTransformer().transform(out).children
+    return set(out[0].children)
+
+
+def mona_to_dfa(mona: str, all_free_vars=None):
     s = mona.split("A counter-example of least length")[0]
     out = mona_parser.parse(s)
     out = TreeTransformer().transform(out).children
@@ -98,7 +125,14 @@ def mona_to_dfa(mona):
     accepting = decrement_states(out[2].children)
     rejecting = decrement_states(out[3].children)
     transitions = remove_initial_transition(out[4].children)
-    input_symbols = concrete_transitions([None] * len(free_vars))
+    if all_free_vars is not None:
+        assert all([x in all_free_vars for x in free_vars])
+        input_symbols = concrete_transitions([None] * len(all_free_vars))
+        transitions = reorder_transition_letters(
+            transitions, free_vars, all_free_vars
+        )
+    else:
+        input_symbols = concrete_transitions([None] * len(free_vars))
     return DFA(
         states=set(accepting + rejecting),
         input_symbols=set(input_symbols),
@@ -108,21 +142,21 @@ def mona_to_dfa(mona):
     )
 
 
-def ltl_to_mona(formula):
+def ltl_to_mona(formula: str):
     parser = ltlf_parser(formula)
     return parser.to_dfa(mona_dfa_out=True)
 
 
-def ltl_to_dfa(formula):
-    return mona_to_dfa(ltl_to_mona(formula))
+def ltl_to_dfa(formula: str, all_free_vars=None):
+    return mona_to_dfa(ltl_to_mona(formula), all_free_vars)
 
 
-def draw_ltl(formula, name):
+def draw_ltl(formula: str, name: str):
     parser = ltlf_parser(formula)
     dfa = parser.to_dfa()
     (graph,) = pydot.graph_from_dot_data(dfa)
-    graph.write_svg("out/" + name + ".svg")
+    graph.write_svg(f"out/{name}.svg")
 
 
-def draw_dfa(dfa, name):
-    dfa.show_diagram().draw(path="out/" + name + ".svg")
+def draw_dfa(dfa: DFA, name: str):
+    dfa.show_diagram().draw(path=f"out/{name}.svg")

@@ -1,6 +1,15 @@
-.PHONY: fmt lint ruff pylint
+.PHONY: examples clean fmt lint ruff pylint
 
-all: fmt lint
+all: examples
+
+examples: | out
+	python3 examples.py
+
+out:
+	mkdir -p out
+
+clean:
+	rm -rf out
 
 fmt:
 	python3 -m black -l 80 .

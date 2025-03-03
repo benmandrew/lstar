@@ -41,8 +41,6 @@ def weaken_to_target(target: DFA, origin: DFA, t: Table):
     j = 0
     modified = True
     while modified:
-        if j >= 3:
-            break
         j += 1
         modified = False
         dfa_gen: DFA = t.to_dfa()
@@ -61,12 +59,31 @@ def weaken_to_target(target: DFA, origin: DFA, t: Table):
     return t
 
 
-desired: DFA = mona.ltl_to_dfa("F(a & F(b & F(c)))")
-query = Query([desired], desired.input_symbols)
-t: Table = dfa_to_table(desired, query)
+def ltl_to_dfa_shared_alphabet(ltls):
+    monas = [mona.ltl_to_mona(ltl) for ltl in ltls]
+    free_vars = [mona.mona_to_free_vars(m) for m in monas]
+    return sorted(list(set().union(*free_vars)))
 
-assumption: DFA = mona.ltl_to_dfa("F(a) & F(b) & F(c)")
 
-t_weak = weaken_to_target(assumption, desired, t)
+ltl_formulae = ["F(b & F(c))", "F(a) & F(b) & F(c)"]
 
-t_weak.draw("weakened", "Weakened")
+alphabet = ltl_to_dfa_shared_alphabet(ltl_formulae)
+
+dfa = mona.ltl_to_dfa(ltl_formulae[0], alphabet)
+
+mona.draw_dfa(dfa, "expanded")
+
+dfa = mona.ltl_to_dfa(ltl_formulae[0])
+
+mona.draw_dfa(dfa, "original")
+
+
+# desired: DFA = mona.ltl_to_dfa("F(a & F(b & F(c)))")
+# query = Query([desired], desired.input_symbols)
+# t: Table = dfa_to_table(desired, query)
+
+# assumption: DFA = mona.ltl_to_dfa("F(a) & F(b) & F(c)")
+
+# t_weak = weaken_to_target(assumption, desired, t)
+
+# t_weak.draw("weakened", "Weakened")
