@@ -1,4 +1,4 @@
-from copy import deepcopy
+from alphabet import Alphabet
 
 from lark import Lark, Transformer, Discard
 from automata.fa.dfa import DFA
@@ -25,43 +25,15 @@ class TreeTransformer(Transformer):
         }
 
 
-def bool_list_to_str(bl):
+def bl_to_str(bl: list[bool]) -> str:
     return "".join(["1" if b else "0" for b in bl])
 
 
-def concrete_transitions(t):
-    """Generate all concrete transitions from an abstract transition of the form:
-        01X0X
-    Where 0 is a negated literal, 1 is positive,
-    and X is either negative or positive, i.e. both satisfy the edge.
-    """
-
-    def f(i, t, acc):
-        if i >= len(t):
-            return acc
-        if t[i] is None:
-            other = deepcopy(acc)
-            for el_acc, el_other in zip(acc, other):
-                el_acc.append(True)
-                el_other.append(False)
-            return f(i + 1, t, acc + other)
-        elif t[i]:
-            for el in acc:
-                el.append(True)
-            return f(i + 1, t, acc)
-        else:
-            for el in acc:
-                el.append(False)
-            return f(i + 1, t, acc)
-
-    res = f(0, t, [[]])
-    return [bool_list_to_str(bl) for bl in res]
-
-
-def get_transitions(t_l):
+def get_transitions(transitions, alphabet: Alphabet):
     res = dict()
-    for t in t_l:
-        for label in concrete_transitions(t["t"]):
+    for t in transitions:
+        for label in alphabet.concrete_transitions(t["t"]):
+            label = bl_to_str(label)
             if t["s"] not in res:
                 res[t["s"]] = {label: t["e"]}
             else:
@@ -83,9 +55,10 @@ def remove_initial_transition(transitions):
 
 
 def reorder_transition_letters(
-    transitions, edge_letters: list[str], true_letters: list[str]
+    transitions, edge_letters: list[str], true_letters: Alphabet
 ):
-    """Expand an abstract `edge` to a wider set of `true_letters`, and reorder to the true order"""
+    """Expand an abstract `edge` to a wider set of `true_letters`,
+    and reorder to the true order"""
 
     def f(edge: str):
         new_edge = []
@@ -114,7 +87,7 @@ def mona_to_free_vars(mona: str) -> list[str]:
     return set(out[0].children)
 
 
-def mona_to_dfa(mona: str, all_free_vars=None):
+def mona_to_dfa(mona: str, alphabet: Alphabet):
     s = mona.split("A counter-example of least length")[0]
     out = mona_parser.parse(s)
     out = TreeTransformer().transform(out).children
@@ -125,18 +98,15 @@ def mona_to_dfa(mona: str, all_free_vars=None):
     accepting = decrement_states(out[2].children)
     rejecting = decrement_states(out[3].children)
     transitions = remove_initial_transition(out[4].children)
-    if all_free_vars is not None:
-        assert all([x in all_free_vars for x in free_vars])
-        input_symbols = concrete_transitions([None] * len(all_free_vars))
-        transitions = reorder_transition_letters(
-            transitions, free_vars, all_free_vars
-        )
-    else:
-        input_symbols = concrete_transitions([None] * len(free_vars))
+    assert all([v in alphabet for v in free_vars])
+    input_symbols = [
+        bl_to_str(bl) for bl in alphabet.all_concrete_transitions()
+    ]
+    transitions = reorder_transition_letters(transitions, free_vars, alphabet)
     return DFA(
         states=set(accepting + rejecting),
         input_symbols=set(input_symbols),
-        transitions=get_transitions(transitions),
+        transitions=get_transitions(transitions, alphabet),
         initial_state=initial,
         final_states=set(accepting),
     )
@@ -147,8 +117,8 @@ def ltl_to_mona(formula: str):
     return parser.to_dfa(mona_dfa_out=True)
 
 
-def ltl_to_dfa(formula: str, all_free_vars=None):
-    return mona_to_dfa(ltl_to_mona(formula), all_free_vars)
+def ltl_to_dfa(formula: str, alphabet: Alphabet):
+    return mona_to_dfa(ltl_to_mona(formula), alphabet)
 
 
 def draw_ltl(formula: str, name: str):

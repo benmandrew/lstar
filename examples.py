@@ -2,6 +2,7 @@ import re as regex
 import re_table as rt
 import parser.mona as mona
 import dfa_table as dt
+from alphabet import Alphabet
 
 
 class Re:
@@ -83,35 +84,45 @@ class Re:
 class Dfa:
 
     @staticmethod
-    def make_example(ltl_s, cexs):
-        dfa = mona.ltl_to_dfa(ltl_s)
+    def make_example(ltl_s, alphabet, cexs):
+        dfa = mona.ltl_to_dfa(ltl_s, alphabet)
         q = dt.Query([dfa], dfa.input_symbols)
         t = dt.Table.from_cexs(q, cexs, dfa.input_symbols)
         return t, ltl_s
 
     @staticmethod
     def fafbfc_chain():
-        return Dfa.make_example("F(a & F(b & F(c)))", ["100" "010" "001"])
+        alphabet = Alphabet(["a", "b", "c"])
+        return Dfa.make_example(
+            "F(a & F(b & F(c)))", alphabet, ["100" "010" "001"]
+        )
 
     @staticmethod
     def fafb_chain():
-        return Dfa.make_example("F(a & F(b))", ["10" "01"])
+        alphabet = Alphabet(["a", "b"])
+        return Dfa.make_example("F(a & F(b))", alphabet, ["10" "01"])
 
     @staticmethod
     def fafbfc_or():
-        return Dfa.make_example("F(a) | F(b) | F(c)", [])
+        alphabet = Alphabet(["a", "b", "c"])
+        return Dfa.make_example("F(a) | F(b) | F(c)", alphabet, [])
 
     @staticmethod
     def fafbfc_and():
-        return Dfa.make_example("F(a) & F(b) & F(c)", ["100" "010" "001"])
+        alphabet = Alphabet(["a", "b", "c"])
+        return Dfa.make_example(
+            "F(a) & F(b) & F(c)", alphabet, ["100" "010" "001"]
+        )
 
     @staticmethod
     def fafb_and():
-        return Dfa.make_example("F(a) & F(b)", ["10" "01", "01" "10"])
+        alphabet = Alphabet(["a", "b"])
+        return Dfa.make_example("F(a) & F(b)", alphabet, ["10" "01", "01" "10"])
 
     @staticmethod
     def fa():
-        return Dfa.make_example("F(a)", [])
+        alphabet = Alphabet(["a"])
+        return Dfa.make_example("F(a)", alphabet, [])
 
     @staticmethod
     def tables():

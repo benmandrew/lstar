@@ -138,7 +138,6 @@ class Table:
 
     def add_cex(self, q, cex):
         split_cex = split_string(cex, self.letter_len)
-        # cex = [bin_to_chr(c) for c in cex]
         for c in split_cex:
             assert c in self.alphabet
         self.add_prefix(cex)

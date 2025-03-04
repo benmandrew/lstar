@@ -9,7 +9,7 @@ out:
 	mkdir -p out
 
 clean:
-	rm -rf out
+	rm -rf out/*
 
 fmt:
 	python3 -m black -l 80 .
